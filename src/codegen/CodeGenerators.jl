@@ -31,6 +31,8 @@ Base.@kwdef struct Options
     add_kwarg_constructors::Bool = false
     parametrize_oneofs::Bool = false
     common_abstract_type::Bool = false
+    mutable_structs::Bool = false
+    struct_fields_constant::Bool = false
 end
 
 struct Context
@@ -65,6 +67,8 @@ include("utils.jl")
         add_kwarg_constructors::Bool=false,
         parametrize_oneofs::Bool=false,
         common_abstract_type::Bool=false,
+        mutable_structs::Bool=false,
+        struct_fields_constant::Bool=false,
     ) -> Nothing
 
 Generate Julia code for `.proto` files at `relative_paths` within `search_directories` and save it to `output_directory`.
@@ -133,8 +137,10 @@ function protojl(
     add_kwarg_constructors::Bool=false,
     parametrize_oneofs::Bool=false,
     common_abstract_type::Bool = false,
+    mutable_structs::Bool = false,
+    struct_fields_constant::Bool = false,
 )
-    options = Options(include_vendored_wellknown_types, always_use_modules, force_required, add_kwarg_constructors, parametrize_oneofs, common_abstract_type)
+    options = Options(include_vendored_wellknown_types, always_use_modules, force_required, add_kwarg_constructors, parametrize_oneofs, common_abstract_type, mutable_structs, struct_fields_constant)
     return _protojl(relative_paths, search_directories, output_directory, options)
 end
 

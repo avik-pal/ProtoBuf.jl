@@ -6,21 +6,24 @@ function _should_force_required(qualified_name, ctx::Context)
 end
 
 function generate_struct_field(io, @nospecialize(field), ctx::Context, type_params)
-    println(io, "    ", jl_fieldname(field)::String, "::", jl_typename(field, ctx)::String)
+    maybe_const = ctx.options.mutable_structs && ctx.options.struct_fields_constant ? "const " : ""
+    println(io, "    ", maybe_const, jl_fieldname(field)::String, "::", jl_typename(field, ctx)::String)
 end
 
 function generate_struct_field(io, field::FieldType{ReferencedType}, ctx::Context, type_params::TypeParams)
     field_name = jl_fieldname(field)
     type_name = _ref_type_or_concrete_stub_or_param(field.type, ctx, type_params)
     type_name = _maybe_union_or_vector_a_type_name(type_name, field, ctx)
-    println(io, "    ", field_name, "::", type_name)
+    maybe_const = ctx.options.mutable_structs && ctx.options.struct_fields_constant ? "const " : ""
+    println(io, "    ", maybe_const, field_name, "::", type_name)
 end
 
 function generate_struct_field(io, field::GroupType, ctx::Context, type_params::TypeParams)
     field_name = jl_fieldname(field)
     type_name = _ref_type_or_concrete_stub_or_param(field.type, ctx, type_params)
     type_name = _maybe_union_or_vector_a_type_name(type_name, field, ctx)
-    println(io, "    ", field_name, "::", type_name)
+    maybe_const = ctx.options.mutable_structs && ctx.options.struct_fields_constant ? "const " : ""
+    println(io, "    ", maybe_const, field_name, "::", type_name)
 end
 
 function generate_struct_field(io, field::FieldType{MapType}, ctx::Context, type_params)
@@ -33,7 +36,8 @@ function generate_struct_field(io, field::FieldType{MapType}, ctx::Context, type
     else
         type_name = jl_typename(field, ctx)
     end
-    println(io, "    ", field_name, "::", type_name)
+    maybe_const = ctx.options.mutable_structs && ctx.options.struct_fields_constant ? "const " : ""
+    println(io, "    ", maybe_const, field_name, "::", type_name)
 end
 
 function generate_struct_field(io, field::OneOfType, ctx::Context, type_params)
@@ -45,7 +49,8 @@ function generate_struct_field(io, field::OneOfType, ctx::Context, type_params)
     else
         type_name = _get_oneof_type_bound(field, ctx, type_params)
     end
-    println(io, "    ", field_name, "::", type_name)
+    maybe_const = ctx.options.mutable_structs && ctx.options.struct_fields_constant ? "const " : ""
+    println(io, "    ", maybe_const, field_name, "::", type_name)
 end
 
 function generate_struct(io, t::MessageType, ctx::Context)
@@ -65,7 +70,8 @@ function generate_struct(io, t::MessageType, ctx::Context)
             " <: AbstractProtoBufMessage" :
             ""
     end
-    print(io, "struct ", struct_name, params_string, maybe_subtype)
+    struct_type = ctx.options.mutable_structs ? "mutable struct" : "struct"
+    print(io, struct_type, " ", struct_name, params_string, maybe_subtype)
     # new line if there are fields, otherwise ensure that we have space before `end`
     length(t.fields) > 0 ? println(io) : print(io, ' ')
     for field in t.fields
@@ -127,7 +133,8 @@ function codegen_cylic_stub(io, t::MessageType, ctx::Context)
     type_params = get_type_params_for_cyclic(t, ctx)
     params_string = get_type_param_string(type_params)
 
-    print(io, "struct ", stub_type_name(t.name), length(t.fields) > 0 ? params_string : " ", _maybe_subtype(abstract_base_name, ctx.options))
+    struct_type = ctx.options.mutable_structs ? "mutable struct" : "struct"
+    print(io, struct_type, " ", stub_type_name(t.name), length(t.fields) > 0 ? params_string : " ", _maybe_subtype(abstract_base_name, ctx.options))
     # new line if there are fields, otherwise ensure that we have space before `end`
     length(t.fields) > 0 ? println(io) : print(io, ' ')
     for field in t.fields
