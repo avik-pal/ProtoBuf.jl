@@ -487,7 +487,7 @@ function tryread(l, chars, k)
 end
 
 const _PROTOBUF_TYPES_AND_KEYWORDS = [
-    "reserved", "syntax", "package", "import", "public", "weak", "option", "extensions",
+    "reserved", "syntax", "edition", "package", "import", "public", "weak", "option", "extensions",
     "to", "max", "service", "stream", "rpc", "returns", "repeated", "oneof", "optional",
     "required", "float", "double", "int32", "int64", "uint32", "uint64", "sint32",
     "sint64", "fixed32", "fixed64", "sfixed32", "sfixed64", "bool", "string", "bytes",
@@ -608,6 +608,9 @@ function lex_type_or_keyword_or_identifier(l::Lexer, c)
         if c == 'n'
             readchar(l)
             return tryread(l, ('u', 'm'), Tokens.ENUM)
+        elseif c == 'd'
+            readchar(l)
+            return tryread(l, ('i', 't', 'i', 'o', 'n'), Tokens.EDITION)
         elseif c == 'x'
             readchar(l)
             c = peekchar(l)

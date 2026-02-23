@@ -35,6 +35,7 @@
     begin_reserved_words,
         RESERVED,
         SYNTAX,
+        EDITION,
         PACKAGE,
         IMPORT,
         PUBLIC,

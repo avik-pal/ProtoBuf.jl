@@ -168,10 +168,17 @@ function parse_proto_file(ps::ParserState)
         proto_version_string = val(expectnext(ps, Tokens.STRING_LIT))[2:end-1] # drop quotes
         @assert (proto_version_string in ("proto3", "proto2"))
         expectnext(ps, Tokens.SEMICOLON)
+        is_proto3 = proto_version_string == "proto3"
+    elseif accept(ps, Tokens.EDITION)
+        expectnext(ps, Tokens.EQ)
+        # We don't really do anything with the edition string yet, but we assume it's proto3-like
+        edition_string = val(expectnext(ps, Tokens.STRING_LIT))[2:end-1] # drop quotes
+        expectnext(ps, Tokens.SEMICOLON)
+        is_proto3 = true
     else
-        proto_version_string = "proto2"
+        is_proto3 = false
     end
-    ps.is_proto3 = proto_version_string == "proto3"
+    ps.is_proto3 = is_proto3
 
     definitions = Dict{String,Union{MessageType, EnumType, ServiceType}}()
     extends = ExtendType[]

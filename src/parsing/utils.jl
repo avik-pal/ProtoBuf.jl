@@ -58,6 +58,16 @@ function _postprocess_reference!(type::ReferencedType, rctx::IntraFileResolvingC
         while true
             (namespaced_name, i) = _findfunc(namespace, i, type.name, type.resolve_from_innermost)
             if i == -1
+                if !isempty(rctx.package_prefix)
+                    namespaced_name = string(rctx.package_prefix, type.name)
+                    def = get(rctx.definitions, namespaced_name, nothing)
+                    if !isnothing(def)
+                        type.name = namespaced_name
+                        type.reference_type = reference_type(def, type)
+                        type.resolved = true
+                        break
+                    end
+                end
                 push!(rctx.external_references, type.name)
                 break
             end

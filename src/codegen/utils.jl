@@ -78,6 +78,13 @@ function Parsers._postprocess_reference!(t::ReferencedType, rctx::InterFileResol
                 matched_prefix = Parsers.match_prefix(package_name_dot, t.name)
                 name_without_import = @view(t.name[length(matched_prefix)+1:end])
                 def = get(imported_file.definitions, name_without_import, nothing)
+                if isnothing(def) && isempty(matched_prefix)
+                    namespaced_name = string(package_name_dot, t.name)
+                    def = get(imported_file.definitions, namespaced_name, nothing)
+                    if !isnothing(def)
+                        name_without_import = namespaced_name
+                    end
+                end
                 isnothing(def) && continue
                 t.name = name_without_import
                 ins == ns && push!(rctx.resolved_file.implicit_imports, import_path)
@@ -86,12 +93,26 @@ function Parsers._postprocess_reference!(t::ReferencedType, rctx::InterFileResol
                 # Referring to a type from a different package (A.B.C.type x X.Y.Z.type)
                 name_without_import = @view(t.name[length(package_name_dot)+1:end])
                 def = get(imported_file.definitions, name_without_import, nothing)
+                if isnothing(def)
+                    # We already have startswith(t.name, package_name_dot), but maybe it's not enough?
+                    # Actually if it starts with it, it's already qualified.
+                    # But if it's e.g. xla.ExecutionOptions.EffortLevel and stored as xla.ExecutionOptions.EffortLevel
+                    # it should have been found as ExecutionOptions.EffortLevel if definitions keys don't have xla.
+                    # But here they DO have xla.
+                end
                 isnothing(def) && continue
                 t.name = name_without_import
                 found = true
             else
                 # The name is not qualified.
                 def = get(imported_file.definitions, t.name, nothing)
+                if isnothing(def) && !isempty(package_name_dot)
+                    namespaced_name = string(package_name_dot, t.name)
+                    def = get(imported_file.definitions, namespaced_name, nothing)
+                    if !isnothing(def)
+                        t.name = namespaced_name
+                    end
+                end
                 isnothing(def) && continue
                 if !isempty(ins)
                     # Same package, different file -> no package prefix needed
