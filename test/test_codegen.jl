@@ -130,7 +130,7 @@ end
     @testset "Minimal proto file with package imports" begin
         s, p, ctx = translate_simple_proto("import \"path/to/a\";", Dict("path/to/a" => "package p;"), Options(always_use_modules=false))
         @test s == """
-        include($(repr(joinpath("p", "p.jl"))))
+        include("p/p.jl")
         import .p
         import ProtoBuf as PB
         using ProtoBuf: OneOf
@@ -139,7 +139,7 @@ end
         s, p, ctx = translate_simple_proto("import \"path/to/a\";", Dict("path/to/a" => "package p;"), Options(always_use_modules=true))
         @test s == """
         module main_pb
-        include($(repr(joinpath("p", "p.jl"))))
+        include("p/p.jl")
         import .p
         import ProtoBuf as PB
         using ProtoBuf: OneOf
@@ -1318,8 +1318,8 @@ end
         using ProtoBuf.EnumX: @enumx
         export A
         struct A end
-        function PB.decode(d::PB.AbstractProtoDecoder, ::Type{<:A})
-            while !PB.message_done(d)
+        function PB.decode(d::PB.AbstractProtoDecoder, ::Type{<:A}, _endpos::Int=0, _group::Bool=false)
+            while !PB.message_done(d, _endpos, _group)
                 field_number, wire_type = PB.decode_tag(d)
                 Base.skip(d, wire_type)
             end
@@ -1337,7 +1337,7 @@ end
         """))
     end
 
-    @testset "Services code generation handlers work" begin 
+    @testset "Services code generation handlers work" begin
         try
             import_cb(io, ctx, definitions) = println(io, "import gRPCClient")
             service_cb(io, t, ctx) = println(io, "gRPCServiceClient = nothing")
